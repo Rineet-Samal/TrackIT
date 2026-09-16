@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="TrackIT logo">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#2b8cff" />
+      <stop offset="1" stop-color="#0b46a0" />
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#g)" />
+  <path d="M150 168h30l38 168h150l38-116H214"
+        fill="none" stroke="#ffffff" stroke-width="26"
+        stroke-linecap="round" stroke-linejoin="round" />
+  <circle cx="236" cy="382" r="24" fill="#ffffff" />
+  <circle cx="344" cy="382" r="24" fill="#ffffff" />
+  <path d="M232 232l34 34 74-78" fill="none" stroke="#7ce7b2" stroke-width="30"
+        stroke-linecap="round" stroke-linejoin="round" />
+</svg>

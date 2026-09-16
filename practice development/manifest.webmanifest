@@ -1,0 +1,19 @@
+{
+  "name": "TrackIT — Shopping Tracker",
+  "short_name": "TrackIT",
+  "description": "Track what to buy by category, with preferred brand, quantity and photos.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f3f7fd",
+  "theme_color": "#1565d8",
+  "icons": [
+    {
+      "src": "icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
