@@ -1,10 +1,11 @@
-const CACHE = 'trackit-v1';
+const CACHE = 'trackit-v2';
 const ASSETS = [
   './',
   './index.html',
   './styles.css',
   './app.js',
   './db.js',
+  './firebase-config.js',
   './manifest.webmanifest',
   './icons/icon.svg'
 ];

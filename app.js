@@ -1,4 +1,4 @@
-import { addItem, getAllItems, updateItem, deleteItem, clearBought } from './db.js';
+import { subscribeItems, addItem, updateItem, deleteItem, clearBought } from './db.js';
 
 const CATEGORIES = [
   { id: 'vegetables', name: 'Vegetables', emoji: '\u{1F966}' },
@@ -19,6 +19,8 @@ const toastEl = document.getElementById('toast');
 
 let pendingPhoto = null;
 let toastTimer = null;
+let allItems = [];
+let itemsLoaded = false;
 
 /* ---------------- helpers ---------------- */
 
@@ -116,9 +118,8 @@ function renderItemRow(item, { showCategory = false } = {}) {
 
 /* ---------------- views ---------------- */
 
-async function renderHome() {
-  const items = await getAllItems();
-  const pending = items.filter((item) => !item.bought);
+function renderHome() {
+  const pending = allItems.filter((item) => !item.bought);
 
   const cards = CATEGORIES.map((category) => {
     const count = pending.filter((item) => item.categoryId === category.id).length;
@@ -141,14 +142,14 @@ async function renderHome() {
     </button>`;
 }
 
-async function renderCategory(categoryId) {
+function renderCategory(categoryId) {
   const category = categoryById.get(categoryId);
   if (!category) {
     location.hash = '#/';
     return;
   }
 
-  const items = (await getAllItems()).filter(
+  const items = allItems.filter(
     (item) => item.categoryId === categoryId && !item.bought
   );
 
@@ -156,11 +157,22 @@ async function renderCategory(categoryId) {
     ? `<ul class="item-list">${items.map((item) => renderItemRow(item)).join('')}</ul>`
     : `<div class="empty"><div class="big">${category.emoji}</div><p>No items yet in ${category.name}.</p></div>`;
 
+  // If the form for this same category is already on screen, only refresh the
+  // list below it so an in-progress sync update doesn't wipe what's being typed.
+  const existingForm = document.getElementById('addForm');
+  if (existingForm && existingForm.dataset.categoryId === categoryId) {
+    const listHost = document.getElementById('itemListHost');
+    const countEl = document.getElementById('itemCount');
+    if (listHost) listHost.innerHTML = list;
+    if (countEl) countEl.textContent = String(items.length);
+    return;
+  }
+
   view.innerHTML = `
     <h2 class="page-title">${category.emoji} ${category.name}</h2>
     <p class="page-sub">Add an item with your preferred brand, quantity and a sample photo.</p>
 
-    <form class="card" id="addForm" autocomplete="off">
+    <form class="card" id="addForm" data-category-id="${category.id}" autocomplete="off">
       <div class="field">
         <label for="itemName">Item name *</label>
         <input type="text" id="itemName" name="name" required maxlength="60" placeholder="e.g. Tomatoes" />
@@ -185,8 +197,8 @@ async function renderCategory(categoryId) {
       <button type="submit" class="btn btn-primary btn-block">Add to ${category.name}</button>
     </form>
 
-    <h3 class="group-heading">In this list <span class="count">${items.length}</span></h3>
-    ${list}`;
+    <h3 class="group-heading">In this list <span id="itemCount" class="count">${items.length}</span></h3>
+    <div id="itemListHost">${list}</div>`;
 
   pendingPhoto = null;
   document.getElementById('itemPhoto').addEventListener('change', async (event) => {
@@ -220,12 +232,11 @@ async function renderCategory(categoryId) {
 
     pendingPhoto = null;
     showToast(`${name} added`);
-    await render();
   });
 }
 
-async function renderAll() {
-  const items = (await getAllItems()).filter((item) => !item.bought);
+function renderAll() {
+  const items = allItems.filter((item) => !item.bought);
 
   if (!items.length) {
     view.innerHTML = `
@@ -256,23 +267,28 @@ async function renderAll() {
     <button class="btn btn-ghost btn-block" id="clearBoughtBtn">Clear bought history</button>`;
 
   document.getElementById('clearBoughtBtn').addEventListener('click', async () => {
-    await clearBought();
+    await clearBought(allItems);
     showToast('Bought items cleared');
   });
 }
 
 /* ---------------- routing ---------------- */
 
-async function render() {
+function render() {
+  if (!itemsLoaded) {
+    view.innerHTML = '<p class="page-sub">Loading your list...</p>';
+    return;
+  }
+
   const hash = location.hash || '#/';
   backBtn.classList.toggle('hidden', hash === '#/');
 
   if (hash.startsWith('#/category/')) {
-    await renderCategory(hash.replace('#/category/', ''));
+    renderCategory(hash.replace('#/category/', ''));
   } else if (hash === '#/all') {
-    await renderAll();
+    renderAll();
   } else {
-    await renderHome();
+    renderHome();
   }
 
   view.focus();
@@ -295,9 +311,8 @@ view.addEventListener('click', async (event) => {
 
   const deleteTarget = event.target.closest('[data-delete]');
   if (deleteTarget) {
-    await deleteItem(Number(deleteTarget.dataset.delete));
+    await deleteItem(deleteTarget.dataset.delete);
     showToast('Item deleted');
-    await render();
   }
 });
 
@@ -305,13 +320,11 @@ view.addEventListener('change', async (event) => {
   const checkbox = event.target.closest('[data-buy]');
   if (!checkbox || !checkbox.checked) return;
 
-  const id = Number(checkbox.dataset.buy);
+  const id = checkbox.dataset.buy;
   await updateItem(id, { bought: true });
   showToast('Marked as bought', 'Undo', async () => {
     await updateItem(id, { bought: false });
-    await render();
   });
-  await render();
 });
 
 backBtn.addEventListener('click', () => {
@@ -321,6 +334,18 @@ backBtn.addEventListener('click', () => {
 document.getElementById('menuBtn').addEventListener('click', () => infoDialog.showModal());
 
 window.addEventListener('hashchange', render);
+
+subscribeItems(
+  (items) => {
+    allItems = items;
+    itemsLoaded = true;
+    render();
+  },
+  (error) => {
+    console.error(error);
+    showToast('Could not sync - check your Firebase setup');
+  }
+);
 
 render();
 
