@@ -3,10 +3,10 @@ import { subscribeItems, addItem, updateItem, deleteItem, clearBought } from './
 const CATEGORIES = [
   { id: 'vegetables', name: 'Vegetables', emoji: '\u{1F966}' },
   { id: 'grocery', name: 'Grocery', emoji: '\u{1F6D2}' },
+  { id: 'food', name: 'Food', emoji: '\u{1F372}' },
   { id: 'medicine', name: 'Medicine', emoji: '\u{1F48A}' },
   { id: 'dress', name: 'Dress', emoji: '\u{1F455}' },
-  { id: 'utensils', name: 'Utensils', emoji: '\u{1F374}' },
-  { id: 'book', name: 'Book', emoji: '\u{1F4DA}' },
+  { id: 'puja', name: 'Puja', emoji: '\u{1F389}' },
   { id: 'other', name: 'Other Items', emoji: '\u{1F4E6}' }
 ];
 
